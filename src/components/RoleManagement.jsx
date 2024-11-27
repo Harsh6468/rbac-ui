@@ -5,15 +5,15 @@ const availablePermissions = ["Read", "Write", "Delete", "Update"];
 const RoleManagement = () => {
   const [rolesData, setRolesData] = useState([
     {
-        id: 1,
-        name: "Admin",
-        permissions: ["Read", "Write", "Delete", "Update"],
-      },
-      {
-        id: 2,
-        name: "User",
-        permissions: ["Read", "View"],
-      },
+      id: 1,
+      name: "Admin",
+      permissions: ["Read", "Write", "Delete", "Update"],
+    },
+    {
+      id: 2,
+      name: "User",
+      permissions: ["Read", "View"],
+    },
   ]);
 
   const [activeTab, setActiveTab] = useState("list");
@@ -23,6 +23,7 @@ const RoleManagement = () => {
   const [deleteName, setDeleteName] = useState("");
   const [deleteRole, setDeleteRole] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // for sidebar toggle
 
   const filteredRoles = rolesData.filter(
     (role) =>
@@ -83,9 +84,13 @@ const RoleManagement = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex flex-col lg:flex-row">
       {/* Sidebar */}
-      <div className="w-1/4 bg-gray-800 text-white h-[80vh] shadow-lg rounded-l-lg p-4">
+      <div
+        className={`lg:w-1/4 w-full bg-gray-800 text-white h-[80vh] shadow-lg rounded-l-lg p-4 ${
+          isSidebarOpen ? "block" : "hidden lg:block"
+        }`}
+      >
         <h2 className="text-xl font-bold mb-6">Role Management</h2>
         <ul>
           {["list", "create", "edit", "delete"].map((tab) => (
@@ -95,6 +100,7 @@ const RoleManagement = () => {
               onClick={() => {
                 resetForm();
                 setActiveTab(tab);
+                if (window.innerWidth < 1024) setIsSidebarOpen(false); // Close sidebar on small screens
               }}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)} Roles
@@ -103,8 +109,31 @@ const RoleManagement = () => {
         </ul>
       </div>
 
+      {/* Hamburger Menu Button for Small Screens */}
+      <div className="lg:hidden p-4">
+        <button
+          className="text-black focus:outline-none"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="h-6 w-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="flex-1 p-6 bg-white h-[80vh] shadow-lg rounded-r-lg overflow-auto">
+      <div className="lg:flex-1 p-6 bg-white h-[80vh] shadow-lg rounded-r-lg overflow-auto">
         {activeTab === "list" && (
           <>
             <div className="mb-4">
@@ -174,6 +203,7 @@ const RoleManagement = () => {
           </div>
         )}
 
+        {/* Edit Role */}
         {activeTab === "edit" && (
           <div className="bg-gray-50 shadow-md rounded p-6">
             <h3 className="text-xl font-bold mb-4">Edit Role</h3>
@@ -230,6 +260,7 @@ const RoleManagement = () => {
           </div>
         )}
 
+        {/* Delete Role */}
         {activeTab === "delete" && (
           <div className="bg-gray-50 shadow-md rounded p-6">
             <h3 className="text-xl font-bold mb-4">Delete Role</h3>
@@ -248,37 +279,34 @@ const RoleManagement = () => {
                 Search
               </button>
             </div>
-            {deleteRole ? (
+            {deleteRole && (
               <div>
                 <p>
                   Are you sure you want to delete the role{" "}
-                  <strong>{deleteRole.name}</strong>?
+                  <span className="font-bold">{deleteRole.name}</span>?
                 </p>
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded mt-4"
                   onClick={() => setShowConfirmation(true)}
                 >
-                  Delete
+                  Delete Role
                 </button>
-              </div>
-            ) : (
-              <p>Role not found</p>
-            )}
-            {showConfirmation && (
-              <div>
-                <p className="mt-4">Are you sure? This action cannot be undone.</p>
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded mt-4"
-                  onClick={handleDelete}
-                >
-                  Yes, Delete
-                </button>
-                <button
-                  className="bg-gray-500 text-white px-4 py-2 rounded mt-4 ml-4"
-                  onClick={() => setShowConfirmation(false)}
-                >
-                  Cancel
-                </button>
+                {showConfirmation && (
+                  <div className="mt-4">
+                    <button
+                      className="bg-green-500 text-white px-4 py-2 rounded mr-4"
+                      onClick={handleDelete}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      className="bg-gray-500 text-white px-4 py-2 rounded"
+                      onClick={() => setDeleteRole(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

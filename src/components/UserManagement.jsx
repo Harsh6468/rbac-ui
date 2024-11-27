@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export const roles = ["Admin", "User", "Manager", "Editor", "Viewer"];
 export const statuses = ["Active", "Inactive", "Pending"];
@@ -8,7 +8,6 @@ const UserManagement = () => {
     { id: 1, name: "John Doe", email: "john@example.com", role: "Admin", status: "Active" },
     { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User", status: "Inactive" },
   ]);
-
   const [activeTab, setActiveTab] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({ id: null, name: "", email: "", role: "", status: "" });
@@ -16,6 +15,20 @@ const UserManagement = () => {
   const [deleteEmail, setDeleteEmail] = useState("");
   const [deleteUser, setDeleteUser] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // for managing sidebar visibility
+  const [isSmallScreen, setIsSmallScreen] = useState(false); // track if it's a small screen
+
+  // Track screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 1024); // Assuming 1024px is the breakpoint for large screens
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Initialize screen size state on mount
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const filteredUsers = users.filter(
     (user) =>
@@ -66,20 +79,28 @@ const UserManagement = () => {
     setDeleteUser(null);
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (isSmallScreen) {
+      setIsSidebarOpen(false); // Close sidebar on small screens when switching tabs
+    }
+  };
+
   return (
-    <div className="flex">
+    <div className="flex flex-col lg:flex-row">
       {/* Sidebar */}
-      <div className="w-1/4 bg-gray-800 text-white h-[80vh] shadow-lg rounded-l-lg p-4">
+      <div
+        className={`lg:w-1/4 w-full bg-gray-800 text-white h-[80vh] shadow-lg rounded-l-lg p-4 ${
+          isSidebarOpen ? "block" : "hidden lg:block"
+        }`}
+      >
         <h2 className="text-xl font-bold mb-6">User Management</h2>
         <ul>
           {["list", "create", "edit", "delete"].map((tab) => (
             <li
               key={tab}
               className={`cursor-pointer py-2 px-4 rounded ${activeTab === tab ? "bg-gray-700" : ""}`}
-              onClick={() => {
-                resetForm();
-                setActiveTab(tab);
-              }}
+              onClick={() => handleTabChange(tab)}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)} Users
             </li>
@@ -87,8 +108,31 @@ const UserManagement = () => {
         </ul>
       </div>
 
+      {/* Hamburger Menu Button for Small Screens */}
+      <div className="lg:hidden p-4">
+        <button
+          className="text-gray-800 focus:outline-none"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="h-6 w-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="flex-1 p-6 bg-white h-[80vh] shadow-lg rounded-r-lg overflow-auto">
+      <div className="lg:flex-1 p-6 bg-white h-[80vh] shadow-lg rounded-r-lg overflow-auto">
         {activeTab === "list" && (
           <>
             <div className="mb-4">
@@ -203,7 +247,7 @@ const UserManagement = () => {
                 Search
               </button>
             </div>
-            {formData.id ? (
+            {formData.id && (
               <form onSubmit={handleSubmit}>
                 <input
                   type="text"
@@ -211,6 +255,7 @@ const UserManagement = () => {
                   placeholder="Name"
                   value={formData.name}
                   onChange={handleChange}
+                  required
                   className="border border-gray-300 p-2 rounded w-full mb-4"
                 />
                 <input
@@ -220,6 +265,7 @@ const UserManagement = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className="border border-gray-300 p-2 rounded w-full mb-4"
+                  disabled
                 />
 
                 {/* Role Dropdown */}
@@ -254,8 +300,6 @@ const UserManagement = () => {
 
                 <button className="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
               </form>
-            ) : (
-              <p>User not found</p>
             )}
           </div>
         )}
@@ -280,26 +324,26 @@ const UserManagement = () => {
             </div>
             {deleteUser && (
               <div>
-                <p>Are you sure you want to delete the user {deleteUser.name}?</p>
+                <p>Are you sure you want to delete {deleteUser.name}?</p>
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded mt-4"
                   onClick={() => setShowConfirmation(true)}
                 >
-                  Delete
+                  Confirm Deletion
                 </button>
               </div>
             )}
-
             {showConfirmation && (
-              <div>
+              <div className="mt-4">
+                <p>Are you sure you want to delete?</p>
                 <button
-                  className="bg-green-500 text-white px-4 py-2 rounded mt-4"
+                  className="bg-red-500 text-white px-4 py-2 rounded"
                   onClick={handleDelete}
                 >
-                  Confirm Delete
+                  Yes
                 </button>
                 <button
-                  className="bg-gray-500 text-white px-4 py-2 rounded mt-4 ml-4"
+                  className="bg-gray-500 text-white px-4 py-2 rounded ml-2"
                   onClick={() => setShowConfirmation(false)}
                 >
                   Cancel
